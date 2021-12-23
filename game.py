@@ -57,12 +57,12 @@ class text_game:
         self.moving_around_reward_value = 0.5
         self.inventory_not_new_reward_value = 0.5
                 
-        self.basic_actions = cmds.basic_actions
+        self.basic_actions = ['go north', 'go south', 'go west', 'go east', 'go northeast', 'go northwest', 'go southeast', 'go southwest', 'go down', 'go up']
+        self.action_space = set(self.basic_actions)
         self.directions = ['north', 'south', 'east', 'west', 'northwest', 'northeast', 'southwest', 'southeast', 'up', 'down']
-        self.command1_actions = cmds.command1_actions
-        self.command2_actions = cmds.command2_actions
-        self.action_space = cmds.action_space
-        self.filtered_tokens = cmds.filtered_tokens
+        self.command1_actions = ['open OBJ', 'get OBJ', 'eat OBJ', 'ask OBJ', 'make OBJ', 'wear OBJ', 'move OBJ', 'kick OBJ', 'find OBJ', 'play OBJ', 'feel OBJ', 'read OBJ', 'fill OBJ', 'pick OBJ', 'pour OBJ', 'pull OBJ', 'leave OBJ', 'break OBJ', 'enter OBJ', 'shake OBJ', 'banish OBJ', 'read OBJ', 'enchant OBJ', 'feel OBJ', 'pour OBJ']
+        self.command2_actions = ['pour OBJ on DCT', 'hide OBJ in DCT', 'pour OBJ in DCT', 'move OBJ in DCT', 'hide OBJ on DCT', 'flip OBJ for DCT', 'fix OBJ with DCT', 'spray OBJ on DCT', 'dig OBJ with DCT', 'cut OBJ with DCT', 'pick OBJ with DCT', 'pour OBJ from DCT', 'fill OBJ with DCT', 'burn OBJ with DCT', 'flip OBJ with DCT', 'read OBJ with DCT', 'hide OBJ under DCT', 'carry OBJ from DCT', 'inflate OBJ with DCT', 'unlock OBJ with DCT', 'give OBJ to DCT', 'carry OBJ to DCT', 'spray OBJ with DCT']
+        self.filtered_tokens = ['Score', 'Moves']
         self.invalid_nouns = [] 
         self.valid_nouns = []
         
