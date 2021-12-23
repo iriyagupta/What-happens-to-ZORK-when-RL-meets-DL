@@ -128,7 +128,7 @@ class text_game:
             state = state[state.index('Moves: ')+len('Moves:')+5:-1].strip()
         except:  ## not valid move
             pass
-        return(state, score, moves)
+        return state, score, moves
         
     def get_state(self):
         ## check surroundings
@@ -150,13 +150,7 @@ class text_game:
         except:  ## not valid move
             score = 0
             moves = 0
-        return(score, moves)
-
-    def look_surroundings(self, p):
-         self.perform_action('look')
-
-    def check_inventory(self, p):
-         self.perform_action('inventory')
+        return score, moves
 
     def get_nouns(self, state):
         matcher = Matcher(self.nlp.vocab)
@@ -168,7 +162,7 @@ class text_game:
             noun = doc[start:end].text
             if noun not in self.directions and noun not in self.invalid_nouns:
                 noun_set.add(noun)
-        return(noun_set)
+        return noun_set
         
     def generate_action_tuples(self, nouns):
         possible_actions = []
