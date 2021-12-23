@@ -1,0 +1,6 @@
+textworld
+nltk
+spacy
+tqdm
+numpy
+keras

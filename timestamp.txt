@@ -1,0 +1,223 @@
+loss: 1.9377
+loss: 1.3122
+loss: 1.3107
+loss: 1.3066
+eps: 0.78
+time:   7.07
+
+loss: 1.6217
+loss: 1.2994
+loss: 1.2944
+loss: 1.2801
+eps: 0.77
+time:   6.32
+
+loss: 1.2517
+loss: 1.2076
+loss: 1.5342
+loss: 1.0991
+eps: 0.75
+time:   8.49
+
+loss: 1.4758
+loss: 0.7682
+loss: 1.2018
+loss: 0.6128
+eps: 0.74
+time:  12.60
+
+loss: 0.5959
+loss: 0.3749
+loss: 0.8784
+loss: 0.5917
+eps: 0.72
+time:   8.89
+
+loss: 0.2582
+loss: 0.4522
+loss: 0.8434
+loss: 0.8625
+eps: 0.71
+time:   9.92
+
+loss: 0.3635
+loss: 0.1779
+loss: 0.1223
+loss: 0.2019
+eps: 0.70
+time:  12.27
+
+loss: 1.3928
+loss: 0.5293
+loss: 0.7143
+loss: 0.1136
+eps: 0.68
+time:  12.24
+
+loss: 0.1935
+loss: 0.1273
+loss: 0.4920
+loss: 0.1786
+eps: 0.67
+time:  12.89
+
+loss: 0.7295
+loss: 0.2960
+loss: 0.1928
+loss: 1.1289
+eps: 0.65
+time:  13.56
+
+loss: 0.5659
+loss: 0.4814
+loss: 0.4501
+loss: 0.1668
+eps: 0.64
+time:  13.84
+
+loss: 0.2271
+loss: 0.0617
+loss: 0.1023
+loss: 0.0902
+eps: 0.63
+time:  13.55
+
+loss: 0.1519
+loss: 0.3360
+loss: 0.7259
+loss: 6.7785
+eps: 0.62
+time:  14.11
+
+loss: 0.5547
+loss: 0.5300
+loss: 0.6851
+loss: 0.5200
+eps: 0.60
+time:  14.68
+
+loss: 0.1369
+loss: 0.1346
+loss: 0.2979
+loss: 0.2317
+eps: 0.59
+time:  18.64
+
+loss: 0.1151
+loss: 0.5769
+loss: 5.2680
+loss: 0.4533
+eps: 0.58
+time:  76.76
+
+loss: 0.2941
+loss: 0.5891
+loss: 0.3546
+loss: 0.1714
+eps: 0.57
+time:  95.96
+
+loss: 0.5169
+loss: 0.8263
+loss: 0.1364
+loss: 0.2859
+eps: 0.56
+time:  109.13
+
+loss: 0.1269
+loss: 0.1081
+loss: 0.0876
+loss: 0.1689
+eps: 0.55
+time:  145.13
+
+loss: 0.8711
+loss: 0.2456
+loss: 0.0812
+loss: 0.0491
+eps: 0.54
+time:  116.43
+
+loss: 0.2221
+loss: 0.7722
+loss: 2.0547
+loss: 0.1382
+eps: 0.53
+time:  96.61
+
+loss: 0.8905
+loss: 0.1169
+loss: 0.5738
+loss: 0.0105
+eps: 0.51
+time:  92.35
+
+loss: 0.2185
+loss: 0.1945
+loss: 0.8482
+loss: 0.0543
+eps: 0.50
+time:  159.33
+
+loss: 0.5706
+loss: 0.8713
+loss: 0.6289
+loss: 0.2281
+eps: 0.49
+time:  129.05
+
+loss: 0.2535
+loss: 1.0196
+loss: 0.3886
+loss: 0.0728
+eps: 0.48
+time:  120.49
+
+loss: 0.3117
+loss: 0.2867
+loss: 0.2094
+loss: 0.6747
+eps: 0.47
+time:  90.94
+
+loss: 0.0131
+loss: 0.2083
+loss: 0.6854
+loss: 0.3559
+eps: 0.47
+time:  388.56
+
+loss: 0.1027
+loss: 5.7027
+loss: 0.4897
+loss: 5.0002
+eps: 0.46
+time:  514.69
+
+loss: 0.0837
+loss: 0.2092
+loss: 1.4829
+loss: 0.3495
+eps: 0.45
+time:  385.55
+
+loss: 0.1620
+loss: 0.2930
+loss: 0.4291
+loss: 0.1985
+eps: 0.44
+time:  454.58
+
+loss: 0.6097
+loss: 0.0752
+loss: 0.5681
+loss: 0.0834
+eps: 0.43
+time:  328.18
+
+loss: 0.0343
+loss: 0.7145
+loss: 5.4263
+loss: 0.5500
+eps: 0.42
+time:  344.02
