@@ -25,10 +25,10 @@ from keras.models import Model
 from keras.preprocessing.text import one_hot, Tokenizer
 from keras.preprocessing.sequence import pad_sequences
 import re
-from agent import DQNAgent as DQNAgent
+from agent import DDQNAgent as DDQNAgent
 import importlib
 from collections import deque
 from numpy.random import choice
 import math
 import pickle
-from agent import DQNAgent
+from agent import DDQNAgent

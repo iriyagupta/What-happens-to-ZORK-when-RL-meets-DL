@@ -12,7 +12,7 @@ from keras.preprocessing.text import Tokenizer
 import pandas as pd
 from tqdm import tqdm
 
-from agent import DQNAgent
+from agent import DDQNAgent
 import spacy
 import re
 import textworld
@@ -27,7 +27,7 @@ infos = textworld.EnvInfos(
 class text_game:
     
     def __init__(self):
-        self.agent = DQNAgent()
+        self.agent = DDQNAgent()
         self.batch_size = None
         self.save_data = True
         
@@ -123,7 +123,7 @@ class text_game:
         self.game_score = 0
         
     def save_model_weights(self):
-        self.agent.model.save_weights('dqn_model_weights.h5')
+        self.agent.model.save_weights('ddqn_model_weights.h5')
         
     def readLine(self):
         line = self.game_state.description

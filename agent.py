@@ -10,7 +10,7 @@ from numpy.random import choice
 import pickle
 
 # Deep Q-learning Agent
-class DQNAgent:
+class DDQNAgent:
     def __init__(self):
         self.memory = deque(maxlen=2000)
         self.positive_memory = deque(maxlen=2000)
