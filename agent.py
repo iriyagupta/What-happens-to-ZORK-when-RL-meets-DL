@@ -1,14 +1,12 @@
 from collections import deque
-from keras.models import Model
+from keras.models import kModel as kModel
 from keras.layers import Input, Embedding, LSTM, Dense, Dot, GRU
 from keras.layers import SimpleRNN as RNN
 import numpy as np
 from keras.preprocessing.sequence import pad_sequences
-import random
 import pandas as pd
-from numpy.random import choice
+from numpy.random import choice, rand
 import pickle
-
 
 class DDQNAgent:
     """
@@ -54,24 +52,24 @@ class DDQNAgent:
         if self.rnn_type == 'vanilla':
             rnn_shared = RNN(rnn_dimension, name="rnn_shared")
             
-        lstm_state = rnn_shared(embedding_state)
-        lstm_action = rnn_shared(embedding_action)
+        rnn_state = rnn_shared(embedding_state)
+        rnn_action = rnn_shared(embedding_action)
 
-        dense_state = Dense(dense_dim, activation='linear', name="dense_state")(lstm_state)
-        dense_action = Dense(dense_dim, activation='linear', name="dense_action")(lstm_action)
+        dense_state = Dense(dense_dim, activation='linear', name="dense_state")(rnn_state)
+        dense_action = Dense(dense_dim, activation='linear', name="dense_action")(rnn_action)
 
         input_dot_state = Input(shape=(dense_dim,))
         input_dot_action = Input(shape=(dense_dim,))
         dot_state_action = Dot(axes=-1, normalize=False, name="dot_state_action")([input_dot_state, input_dot_action])
 
-        model_dot_state_action = Model(inputs=[input_dot_state, input_dot_action], outputs=dot_state_action,
+        model_dot_state_action = kModel(inputs=[input_dot_state, input_dot_action], outputs=dot_state_action,
                                            name="dot_state_action")
         self.model_dot_state_action = model_dot_state_action
 
-        self.state_model_dqn_1 = Model(inputs=input_state, outputs=dense_state, name="state")
-        self.action_model_dqn_1 = Model(inputs=input_action, outputs=dense_action, name="action")
+        self.state_model_dqn_1 = kModel(inputs=input_state, outputs=dense_state, name="state")
+        self.action_model_dqn_1 = kModel(inputs=input_action, outputs=dense_action, name="action")
 
-        model = Model(
+        model = kModel(
             inputs=[self.state_model_dqn_1.input, self.action_model_dqn_1.input], 
             outputs=model_dot_state_action([self.state_model_dqn_1.output, self.action_model_dqn_1.output])
         )
@@ -98,24 +96,24 @@ class DDQNAgent:
         if self.rnn_type == 'vanilla':
             rnn_shared = RNN(rnn_dimension, name="rnn_shared")
 
-        lstm_state = rnn_shared(embedding_state)
-        lstm_action = rnn_shared(embedding_action)
+        rnn_state = rnn_shared(embedding_state)
+        rnn_action = rnn_shared(embedding_action)
 
-        dense_state = Dense(dense_dim, activation='linear', name="dense_state")(lstm_state)
-        dense_action = Dense(dense_dim, activation='linear', name="dense_action")(lstm_action)
+        dense_state = Dense(dense_dim, activation='linear', name="dense_state")(rnn_state)
+        dense_action = Dense(dense_dim, activation='linear', name="dense_action")(rnn_action)
 
         input_dot_state = Input(shape=(dense_dim,))
         input_dot_action = Input(shape=(dense_dim,))
         dot_state_action = Dot(axes=-1, normalize=False, name="dot_state_action")([input_dot_state, input_dot_action])
 
-        model_dot_state_action = Model(inputs=[input_dot_state, input_dot_action], outputs=dot_state_action,
+        model_dot_state_action = kModel(inputs=[input_dot_state, input_dot_action], outputs=dot_state_action,
                                            name="dot_state_action")
         self.model_dot_state_action_double = model_dot_state_action
 
-        self.state_model_dqn_2 = Model(inputs=input_state, outputs=dense_state, name="state")
-        self.action_model_dqn_2 = Model(inputs=input_action, outputs=dense_action, name="action")
+        self.state_model_dqn_2 = kModel(inputs=input_state, outputs=dense_state, name="state")
+        self.action_model_dqn_2 = kModel(inputs=input_action, outputs=dense_action, name="action")
 
-        model = Model(
+        model = kModel(
             inputs=[self.state_model_dqn_2.input, self.action_model_dqn_2.input], 
             outputs=model_dot_state_action([self.state_model_dqn_2.output, self.action_model_dqn_2.output])
         )
@@ -139,13 +137,6 @@ class DDQNAgent:
         self.memory.append((state, action, reward, next_state, next_state_text, action_dict, done))
         if reward > 0.5:
             self.positive_memory.append((state, action, reward, next_state, next_state_text, action_dict, done))
-            
-    def act_random(self):
-        ## decides to perform either a random action or an action with the highest Q value
-        if np.random.rand() <= self.epsilon:    
-            return True
-        else:
-            return False
 
     def predict_actions(self, state_text, state, action_dict, actions):
         state_dense = self.state_model_dqn_1.predict([state])[0]
@@ -153,7 +144,7 @@ class DDQNAgent:
         
         if self.exploration_strategy == 'eps':
             ## decide which type of action to perform
-            if self.act_random(): 
+            if rand() <= self.epsilon:
                 random_index = choice(len(actions))
                 best_action = actions[random_index]
             else: 
@@ -194,16 +185,13 @@ class DDQNAgent:
             q_target = 0
             self.state_q_values[state_text] = q_target
         i = 0
-        q_max = -np.math.inf
+        q_max = -1e20
         action_items = list(action_dict.items())
         N = len(action_items)
-        index_list = list(range(N))
-        random.shuffle(index_list)
         
         for i in range(min(N, self.MAX_ACTIONS)):
             if q_max < q_target:
-                idx = index_list[i]
-                action, data = action_items[idx]
+                action, data = action_items[i]
                 _, action_vector = data
                 action_dense = self.action_model_dqn_2.predict([action_vector], use_multiprocessing=True)[0]
                 action_input = action_dense.reshape((1, len(action_dense)))
@@ -224,8 +212,8 @@ class DDQNAgent:
         next_state_dict = pd.DataFrame(columns=['next_state', 'next_state_input', 'future_q'])
         batch_positive_size = int(batch_size*self.prioritized_fraction)
         batch_normal_size = batch_size - batch_positive_size
-        batch_positive_selections = np.random.choice(len(self.positive_memory), batch_positive_size)
-        batch_normal_selections = np.random.choice(len(self.memory), batch_normal_size)
+        batch_positive_selections = choice(len(self.positive_memory), batch_positive_size)
+        batch_normal_selections = choice(len(self.memory), batch_normal_size)
         b_p = 0
         b_r = 0 
         for i in range(batch_size):  
@@ -262,9 +250,10 @@ class DDQNAgent:
                 actions[i] = action[0]
                 targets[i] = target
                 
-        states = pad_sequences(states)
-        actions = pad_sequences(actions)
-        history = self.model.fit(x=[states, actions], y=targets, batch_size=batch_size, epochs=1, verbose=1)
+        history = self.model.fit(x=[
+            pad_sequences(states), 
+            pad_sequences(actions)
+        ], y=targets, batch_size=batch_size, epochs=1, verbose=1)
         self.model_histories.append(history)
         if self.epsilon > self.epsilon_min:
             self.epsilon *= self.epsilon_decay
