@@ -326,16 +326,13 @@ class text_game:
             pass
     
     def load_tokenizer(self):
-        ## load previously found invalid nouns from pickled list
         with open('tokenizer.pickle', 'rb') as fp:
-                self.tokenizer = pickle.load(fp)
-                print('*** loaded tokenizer ***')
+            self.tokenizer = pickle.load(fp)
        
-            
     def save_invalid_nouns(self):
         ## save invalid nouns to pickled list
         try:
-            with open('invalid_nouns.txt', 'wb') as fp:
+            with open('invalid_nouns.pickle', 'wb') as fp:
                 pickle.dump(self.invalid_nouns, fp)
         except:
             pass
@@ -343,7 +340,7 @@ class text_game:
     def load_invalid_nouns(self):
         ## load previously found invalid nouns from pickled list
         try:
-            with open ('invalid_nouns.txt', 'rb') as fp:
+            with open ('invalid_nouns.pickle', 'rb') as fp:
                 n = pickle.load(fp)
                 self.invalid_nouns.extend(n)
         except:
@@ -352,7 +349,7 @@ class text_game:
     def save_valid_nouns(self):
         ## save invalid nouns to pickled list
         try:
-            with open('valid_nouns.txt', 'wb') as fp:
+            with open('valid_nouns.pickle', 'wb') as fp:
                 pickle.dump(self.valid_nouns, fp)
         except:
             pass
@@ -360,7 +357,7 @@ class text_game:
     def load_valid_nouns(self):
         ## load previously found invalid nouns from pickled list
         try:
-            with open ('invalid_nouns.txt', 'rb') as fp:
+            with open ('invalid_nouns.pickle', 'rb') as fp:
                 n = pickle.load(fp)
                 self.valid_nouns.extend(n)
         except:
