@@ -72,8 +72,8 @@ class DDQNAgent:
         self.action_model_dqn_1 = Model(inputs=input_action, outputs=dense_action, name="action")
 
         model = Model(
-            inputs=[self.state_model_dqn_1.input, self.action_model.input], 
-            outputs=model_dot_state_action([self.state_model_dqn_1.output, self.action_model.output])
+            inputs=[self.state_model_dqn_1.input, self.action_model_dqn_1.input], 
+            outputs=model_dot_state_action([self.state_model_dqn_1.output, self.action_model_dqn_1.output])
         )
         model.compile(optimizer='RMSProp', loss='mse')
         return model
