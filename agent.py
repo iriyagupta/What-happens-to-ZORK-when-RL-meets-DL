@@ -1,13 +1,13 @@
 from collections import deque
 from keras.models import Model
-from keras.layers import Input, Embedding, LSTM, Dense, Dot
+from keras.layers import Input, Embedding, LSTM, Dense, Dot, GRU
+from keras.layers import SimpleRNN as RNN
 import numpy as np
 from keras.preprocessing.sequence import pad_sequences
 import random
 import pandas as pd
 from numpy.random import choice
 import pickle
-from tqdm import tqdm
 
 # Deep Q-learning Agent
 class DQNAgent:
@@ -21,6 +21,7 @@ class DQNAgent:
         self.epsilon_decay = 0.995
         self.learning_rate = 0.1
         self.vocab_size = 1200
+        self.rnn_type = 'lstm'  # vanilla, gru, lstm
         self.exploration_strategy = 'eps' # [eps, multinomial]
         self.MAX_ACTIONS = 10**10  # updating q function requires iterating over all the actions. Cap that limit
         self.state_q_values = dict()
@@ -30,21 +31,27 @@ class DQNAgent:
 
     def _build_model(self):
         # Neural Net for Deep-Q learning Model
-        embed_dim = 16
-        lstm_dim = 32 
+        embedding_size = 16
+        rnn_dimension = 32 
         dense_dim = 8
 
         input_state = Input(batch_shape=(None, None), name="input_state")
         input_action = Input(batch_shape=(None, None), name="input_action")
 
-        embedding_shared = Embedding(self.vocab_size + 1, embed_dim, input_length=None, mask_zero=True,
+        embedding_shared = Embedding(self.vocab_size + 1, embedding_size, input_length=None, mask_zero=True,
                             trainable=True, name="embedding_shared")
         embedding_state = embedding_shared(input_state)
         embedding_action = embedding_shared(input_action)
 
-        lstm_shared = LSTM(lstm_dim, name="lstm_shared")
-        lstm_state = lstm_shared(embedding_state)
-        lstm_action = lstm_shared(embedding_action)
+        if self.rnn_type == 'lstm':
+            rnn_shared = LSTM(rnn_dimension, name="rnn_shared")
+        if self.rnn_type == 'gru':
+            rnn_shared = GRU(rnn_dimension, name="rnn_shared")
+        if self.rnn_type == 'vanilla':
+            rnn_shared = RNN(rnn_dimension, name="rnn_shared")
+            
+        lstm_state = rnn_shared(embedding_state)
+        lstm_action = rnn_shared(embedding_action)
 
         dense_state = Dense(dense_dim, activation='linear', name="dense_state")(lstm_state)
         dense_action = Dense(dense_dim, activation='linear', name="dense_action")(lstm_action)
@@ -69,21 +76,27 @@ class DQNAgent:
         return model
     def _build_model_double(self):
         # Neural Net for Deep-Q learning Model
-        embed_dim = 16
-        lstm_dim = 32 
+        embedding_size = 16
+        rnn_dimension = 32 
         dense_dim = 8
 
         input_state = Input(batch_shape=(None, None), name="input_state")
         input_action = Input(batch_shape=(None, None), name="input_action")
 
-        embedding_shared = Embedding(self.vocab_size + 1, embed_dim, input_length=None, mask_zero=True,
+        embedding_shared = Embedding(self.vocab_size + 1, embedding_size, input_length=None, mask_zero=True,
                             trainable=True, name="embedding_shared")
         embedding_state = embedding_shared(input_state)
         embedding_action = embedding_shared(input_action)
 
-        lstm_shared = LSTM(lstm_dim, name="lstm_shared")
-        lstm_state = lstm_shared(embedding_state)
-        lstm_action = lstm_shared(embedding_action)
+        if self.rnn_type == 'lstm':
+            rnn_shared = LSTM(rnn_dimension, name="rnn_shared")
+        if self.rnn_type == 'gru':
+            rnn_shared = GRU(rnn_dimension, name="rnn_shared")
+        if self.rnn_type == 'vanilla':
+            rnn_shared = RNN(rnn_dimension, name="rnn_shared")
+
+        lstm_state = rnn_shared(embedding_state)
+        lstm_action = rnn_shared(embedding_action)
 
         dense_state = Dense(dense_dim, activation='linear', name="dense_state")(lstm_state)
         dense_action = Dense(dense_dim, activation='linear', name="dense_action")(lstm_action)
