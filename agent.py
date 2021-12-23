@@ -9,8 +9,13 @@ import pandas as pd
 from numpy.random import choice
 import pickle
 
-# Deep Q-learning Agent
+
 class DDQNAgent:
+    """
+        Creates 2 DQN models
+        Trains one on the predictions of the other
+    """
+
     def __init__(self):
         self.memory = deque(maxlen=2000)
         self.positive_memory = deque(maxlen=2000)
@@ -26,11 +31,10 @@ class DDQNAgent:
         self.MAX_ACTIONS = 10**10  # updating q function requires iterating over all the actions. Cap that limit
         self.state_q_values = dict()
         self.model_histories = list()
-        self.model = self._build_model()
-        self.model_double = self._build_model_double()
+        self.model = self.build_dqn_model_1()
+        self.build_dqn_model_2()
 
-    def _build_model(self):
-        # Neural Net for Deep-Q learning Model
+    def build_dqn_model_1(self):
         embedding_size = 16
         rnn_dimension = 32 
         dense_dim = 8
@@ -64,18 +68,17 @@ class DDQNAgent:
                                            name="dot_state_action")
         self.model_dot_state_action = model_dot_state_action
 
-        model_state = Model(inputs=input_state, outputs=dense_state, name="state")
-        model_action = Model(inputs=input_action, outputs=dense_action, name="action")
-        self.model_state = model_state
-        self.model_action = model_action
+        self.state_model_dqn_1 = Model(inputs=input_state, outputs=dense_state, name="state")
+        self.action_model_dqn_1 = Model(inputs=input_action, outputs=dense_action, name="action")
 
-        model = Model(inputs=[model_state.input, model_action.input], 
-                      outputs=model_dot_state_action([model_state.output, model_action.output]))
-
+        model = Model(
+            inputs=[self.state_model_dqn_1.input, self.action_model.input], 
+            outputs=model_dot_state_action([self.state_model_dqn_1.output, self.action_model.output])
+        )
         model.compile(optimizer='RMSProp', loss='mse')
         return model
-    def _build_model_double(self):
-        # Neural Net for Deep-Q learning Model
+
+    def build_dqn_model_2(self):
         embedding_size = 16
         rnn_dimension = 32 
         dense_dim = 8
@@ -109,16 +112,20 @@ class DDQNAgent:
                                            name="dot_state_action")
         self.model_dot_state_action_double = model_dot_state_action
 
-        model_state = Model(inputs=input_state, outputs=dense_state, name="state")
-        model_action = Model(inputs=input_action, outputs=dense_action, name="action")
-        self.model_state_double = model_state
-        self.model_action_double = model_action
+        self.state_model_dqn_2 = Model(inputs=input_state, outputs=dense_state, name="state")
+        self.action_model_dqn_2 = Model(inputs=input_action, outputs=dense_action, name="action")
 
-        model = Model(inputs=[model_state.input, model_action.input], 
-                      outputs=model_dot_state_action([model_state.output, model_action.output]))
-
+        model = Model(
+            inputs=[self.state_model_dqn_2.input, self.action_model_dqn_2.input], 
+            outputs=model_dot_state_action([self.state_model_dqn_2.output, self.action_model_dqn_2.output])
+        )
         model.compile(optimizer='RMSProp', loss='mse')
-        return model
+
+        # no need to return the mo del
+        #
+
+
+
     def save_model_weights(self):
         self.model.save('zork_model.h5')
         self.model.save_weights('zork_model_weights.h5')
@@ -127,7 +134,8 @@ class DDQNAgent:
                 pickle.dump(self.model_histories, fp, protocol=pickle.HIGHEST_PROTOCOL)
         except:
             pass
-    def remember(self, state, state_text, action, reward, next_state, next_state_text, action_dict, done):
+
+    def remember(self, state, _, action, reward, next_state, next_state_text, action_dict, done):
         self.memory.append((state, action, reward, next_state, next_state_text, action_dict, done))
         if reward > 0.5:
             self.positive_memory.append((state, action, reward, next_state, next_state_text, action_dict, done))
@@ -140,7 +148,7 @@ class DDQNAgent:
             return False
 
     def predict_actions(self, state_text, state, action_dict, actions):
-        state_dense = self.model_state.predict([state])[0]
+        state_dense = self.state_model_dqn_1.predict([state])[0]
         state_input = state_dense.reshape((1, len(state_dense)))
         
         if self.exploration_strategy == 'eps':
@@ -171,7 +179,7 @@ class DDQNAgent:
         idx = choice(list(range(N)), size=1, p=probs_norm)[0]
         action, data = action_items[idx]
         _, action_vector = data
-        action_dense = self.model_action_double.predict([action_vector], use_multiprocessing=True)[0]
+        action_dense = self.action_model_dqn_2.predict([action_vector], use_multiprocessing=True)[0]
         action_input = action_dense.reshape((1, len(action_dense)))
         q = self.model_dot_state_action_double.predict([state_input, action_input], use_multiprocessing=True)[0][0]
 
@@ -197,7 +205,7 @@ class DDQNAgent:
                 idx = index_list[i]
                 action, data = action_items[idx]
                 _, action_vector = data
-                action_dense = self.model_action_double.predict([action_vector], use_multiprocessing=True)[0]
+                action_dense = self.action_model_dqn_2.predict([action_vector], use_multiprocessing=True)[0]
                 action_input = action_dense.reshape((1, len(action_dense)))
                 q = self.model_dot_state_action_double.predict([state_input, action_input], use_multiprocessing=True)[0][0]
                 if q > q_max:
@@ -233,7 +241,7 @@ class DDQNAgent:
                     next_state_input = next_state_dict[next_state_dict['next_state'] == next_state]['next_state_input'] 
                     future_q = next_state_dict[next_state_dict['next_state'] == next_state]['future_q']
                 except:
-                    next_state_dense = self.model_state_double.predict([next_state])[0]
+                    next_state_dense = self.state_model_dqn_2.predict([next_state])[0]
                     next_state_input = next_state_dense.reshape((1, len(next_state_dense)))
 
                     if self.exploration_strategy == 'eps':

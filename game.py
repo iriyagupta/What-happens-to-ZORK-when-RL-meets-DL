@@ -95,14 +95,7 @@ class text_game:
         self.unique_state = set()
         self.game_score = 0
         self.game_state = self.env.reset()
-    
-    def end_game(self):
-        if self.save_data:    
-            self.save_invalid_nouns()
-            self.save_valid_nouns()
-            self.save_tokenizer()
-            self.kill_game()
-        
+
     def kill_game(self):
         if self.save_data:
             self.save_invalid_nouns()
@@ -208,7 +201,7 @@ class text_game:
         return possible_actions
 
     def embedding_similarity(self, verb, noun, agent):
-        embedding_matrix = agent.model_state.layers[1]
+        embedding_matrix = agent.state_model_dqn_1.layers[1]
         embedding_matrix = embedding_matrix.get_weights()
         embedding_matrix = embedding_matrix[0]
         noun_idx, verb_idx = self.tokenizer.texts_to_sequences(word_tokenize(noun)), self.tokenizer.texts_to_sequences(word_tokenize(verb))
@@ -235,9 +228,6 @@ class text_game:
                 if sim_score < 0:
                     sim_score = self.random_action_basic_prob**self.random_action_weight
                 similarities.append(sim_score)
-                # except:
-                #     similarities.append(self.random_action_low_prob**self.random_action_weight)
-
             else:                       ## commands with two nouns i.e. unlock chest with key
                 # try:
                 noun1 = word_tokenize(action)[1]
@@ -267,17 +257,9 @@ class text_game:
         text = text.lower()
         # remove all characters except alphanum, spaces and - ' "
         text = self.compiled_expression.sub('', text)
-        # split numbers into digits to avoid infinite vocabulary size if random numbers are present:
-        #text = re.sub('[0-9]', ' \g<0> ', text)
-        
-        ## remove problematic flavor text
-        flavor_text = 'you hear in the distance the chirping of a song bird'
-        if (flavor_text in text):
-            text = text.replace(flavor_text, '')
         text = re.sub('\s{2,}', ' ', text)
-        # expand unambiguous 'm, 't, 're, ... expressions
-        #text = text.replace('\'m ', ' am ').replace('\'re ', ' are ').replace('won\'t', 'will not').replace('n\'t', ' not').replace('\'ll ', ' will ').replace('\'ve ', ' have ').replace('\'s', ' \'s')
         return text
+
     def vectorize_text(self, text, tokenizer):
         words = word_tokenize(text)
         tokenizer.fit_on_texts(words)
@@ -385,7 +367,6 @@ class text_game:
             pass
     
     def init_word2vec(self):
-        #model = Word2Vec.load('tutorial.model')
         f = open(self.tutorials_text, 'r', encoding="ISO-8859-1")
         tutorials = f.read()
         sentences = word_tokenize(tutorials)
