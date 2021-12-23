@@ -1,9 +1,3 @@
-
-# coding: utf-8
-
-# In[2]:
-
-
 class commands:
     def __init__(self):
         self.basic_actions = [

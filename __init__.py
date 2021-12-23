@@ -31,6 +31,4 @@ from collections import deque
 from numpy.random import choice
 import math
 import pickle
-from progressbar import ProgressBar
 from agent import DQNAgent
-from game_commands import commands

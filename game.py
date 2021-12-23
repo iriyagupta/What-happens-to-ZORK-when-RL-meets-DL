@@ -12,7 +12,6 @@ import pandas as pd
 from tqdm import tqdm
 
 from agent import DQNAgent
-from game_commands import commands
 import spacy
 import re
 import textworld
@@ -58,9 +57,8 @@ class text_game:
         self.moving_around_reward_value = 0.5
         self.inventory_not_new_reward_value = 0.5
                 
-        cmds = commands()
         self.basic_actions = cmds.basic_actions
-        self.directions = cmds.directions
+        self.directions = ['north', 'south', 'east', 'west', 'northwest', 'northeast', 'southwest', 'southeast', 'up', 'down']
         self.command1_actions = cmds.command1_actions
         self.command2_actions = cmds.command2_actions
         self.action_space = cmds.action_space
