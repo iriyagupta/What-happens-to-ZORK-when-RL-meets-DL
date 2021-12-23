@@ -5,6 +5,7 @@ from itertools import permutations
 from keras.preprocessing.sequence import pad_sequences
 import pickle
 import re
+from scipy import spatial
 from gensim.models import Word2Vec
 import numpy as np
 from keras.preprocessing.text import Tokenizer
@@ -205,6 +206,14 @@ class text_game:
                             similarities.append(self.random_action_low_prob)
 
         return possible_actions
+
+    def embedding_similarity(self, verb, noun, agent):
+        embedding_matrix = agent.model_state.layers[1]
+        embedding_matrix = embedding_matrix.get_weights()
+        embedding_matrix = embedding_matrix[0]
+        noun_idx, verb_idx = self.tokenizer.texts_to_sequences(word_tokenize(noun)), self.tokenizer.texts_to_sequences(word_tokenize(verb))
+        noun_vec, verb_vec = embedding_matrix[noun_idx[0]], embedding_matrix[verb_idx[0]]
+        return 1 - spatial.distance.cosine(noun_vec, verb_vec)
     
     def add_to_action_space(self, action_space, actions):
         similarities = []
@@ -218,28 +227,32 @@ class text_game:
                 similarities.append(self.random_action_basic_prob)
             elif len(words)<3:           ## commands with one noun i.e. open mailbox, read letter
                 noun = word_tokenize(action)[1]
-                try:
+                # try:
+                if self.agent is None:
                     sim_score = self.word_2_vec.similarity(verb, noun)**self.random_action_weight
-                    if sim_score < 0:
-                        sim_score = self.random_action_basic_prob**self.random_action_weight
-                    similarities.append(sim_score)
-                except:
-                    similarities.append(self.random_action_low_prob**self.random_action_weight)
+                else:
+                    sim_score = np.abs(self.embedding_similarity(verb, noun, self.agent))**self.random_action_weight
+                if sim_score < 0:
+                    sim_score = self.random_action_basic_prob**self.random_action_weight
+                similarities.append(sim_score)
+                # except:
+                #     similarities.append(self.random_action_low_prob**self.random_action_weight)
 
             else:                       ## commands with two nouns i.e. unlock chest with key
-                try:
-                    noun1 = word_tokenize(action)[1]
-                    prep = word_tokenize(action)[2]
-                    noun2 = word_tokenize(action)[3]
+                # try:
+                noun1 = word_tokenize(action)[1]
+                prep = word_tokenize(action)[2]
+                noun2 = word_tokenize(action)[3]
+                if self.agent is None:
                     sim_score1 = self.word_2_vec.similarity(verb, noun1)
                     sim_score2 = self.word_2_vec.similarity(prep, noun2)
-                    sim_score = ((sim_score1 + sim_score2)/2)**self.random_action_weight
-                    if sim_score < 0:
-                        sim_score = 0.05
-                    similarities.append(sim_score**self.random_action_weight)
-                except:
-                    similarities.append(self.random_action_low_prob**self.random_action_weight)
-
+                else:
+                    sim_score1 = np.abs(self.embedding_similarity(verb, noun1, self.agent))
+                    sim_score2 = np.abs(self.embedding_similarity(prep, noun2, self.agent))
+                sim_score = ((sim_score1 + sim_score2)/2)**self.random_action_weight
+                if sim_score < 0:
+                    sim_score = 0.05
+                similarities.append(sim_score**self.random_action_weight)
 
         return action_space, similarities
         
