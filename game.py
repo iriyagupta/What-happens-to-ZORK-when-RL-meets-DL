@@ -298,7 +298,7 @@ class text_game:
             reward = reward + self.moving_around_reward_value
             reward_msg += ' - moved around - ' 
 
-        # akshay
+        
         # print('Rewarded: ' + str(reward) + ' points.')
         return reward, reward_msg
 
