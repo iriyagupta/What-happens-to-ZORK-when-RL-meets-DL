@@ -125,14 +125,14 @@ class text_game:
         return description
         
     def get_state(self):
-        ## check surroundings
+        
         surroundings = self.preprocess(self.game_state.description)
 
-        ## check inventory
+        
         inventory = self.preprocess(self.game_state.inventory)
         score = self.game_state.score
         
-        ## join surroundings and inventory
+        
         state = surroundings + ' ' + inventory
         return state, inventory, score
 
@@ -155,17 +155,17 @@ class text_game:
             possible_actions.append(i)
             similarities.append(self.random_action_basic_prob)
         for i in nouns:
-            for action1 in self.command1_actions:   ## first loop replaces 'x' in each action in command1_actions
+            for action1 in self.command1_actions:   
                 action_to_add = action1.replace('OBJ', i)
                 possible_actions.append(action_to_add)
                 try:
                     similarities.append(self.word_2_vec.similarity(word_tokenize(action_to_add)[0], i))
                 except:
                     similarities.append(self.random_action_low_prob)
-            noun_permutations = list(permutations(nouns, 2))    ## second loop replaces 'x' and 'y' in each action in command2_actions
+            noun_permutations = list(permutations(nouns, 2))    
             for action2 in self.command2_actions:
                 for perm in noun_permutations:
-                    if (perm[0] == perm[1]):  ## ignore same noun acting on itself
+                    if (perm[0] == perm[1]):  
                         pass
                     else:
                         action_to_add = action2.replace('OBJ', perm[0])
@@ -194,9 +194,9 @@ class text_game:
         for action in action_space:
             words = word_tokenize(action)
             verb = words[0]
-            if verb in self.basic_actions:    ## basic commands i.e. go north, go south
+            if verb in self.basic_actions:    
                 similarities.append(self.random_action_basic_prob)
-            elif len(words)<3:           ## commands with one noun i.e. open mailbox, read letter
+            elif len(words)<3:           
                 noun = word_tokenize(action)[1]
                 # try:
                 if self.agent is None:
@@ -206,7 +206,7 @@ class text_game:
                 if sim_score < 0:
                     sim_score = self.random_action_basic_prob**self.random_action_weight
                 similarities.append(sim_score)
-            else:                       ## commands with two nouns i.e. unlock chest with key
+            else:                       
                 # try:
                 noun1 = word_tokenize(action)[1]
                 prep = word_tokenize(action)[2]
@@ -251,19 +251,19 @@ class text_game:
     def calculate_reward(self, inventory, old_inventory, moves_count, old_state, new_state, round_score):
         reward = 0
         reward_msg = ''
-        ## add reward from score in game
+        
         if(moves_count != 0):
             reward = reward + round_score*self.game_score_weight
             if (round_score > 0):
                 print('Scored ' + str(round_score) + ' points in game.')
                 reward_msg += ' game score: ' + str(round_score) + ' '
-        ## add small negative reward for each move
+        
         reward = reward - self.negative_per_turn_reward
         
-        ## add reward for picking up / using items
+        
         if(moves_count != 0):
-            if inventory.strip().lower() not in old_inventory.strip().lower(): ## inventory changed, ignoring chirping bird line
-                ## keep track of unique inventory changes to prevent picking up and dropping items constantly
+            if inventory.strip().lower() not in old_inventory.strip().lower(): 
+                
                 if (old_inventory + ' - ' + inventory) not in self.unique_inventory_changes:
                     self.unique_inventory_changes.add(old_inventory + ' - ' + inventory)
                     reward = reward + self.inventory_reward_value
@@ -272,8 +272,8 @@ class text_game:
                 else:
                     reward = reward + self.inventory_not_new_reward_value
                     
-        ## add reward for discovering new areas
-        if new_state.strip() not in self.unique_state:  ## new location
+        
+        if new_state.strip() not in self.unique_state:  
             reward = reward + self.new_area_reward_value
             self.unique_state.add(new_state.strip())
             reward_msg += ' new area score ---' + new_state.strip()
@@ -288,7 +288,7 @@ class text_game:
 
     def detect_invalid_nouns(self, action_response):
         word = ''
-        ## detect and remove invalid nouns from future turns
+        
         if('know the word' in action_response):
             startIndex = action_response.find('\"')
             endIndex = action_response.find('\"', startIndex + 1)
@@ -329,7 +329,7 @@ class text_game:
             return w2v
         
     def get_data(self, state):
-        ## if we have generated actions before for state, load them, otherwise generate actions
+        
         if (state in list(self.state_data['State'])):
             state_vector = list(self.state_data[self.state_data['State'] == state]['StateVector'])[0][0]
             try:
@@ -358,11 +358,11 @@ class text_game:
                 probs = np.array(probs)
         else: 
             state_vector = self.vectorize_text(state,self.tokenizer)
-            ## get nouns from state
+            
             nouns = self.get_nouns(state)
-            ## test nouns for validity
+            
             self.test_nouns(nouns)
-            ## remove invalid nouns
+            
             for noun in nouns:
                 if noun in self.invalid_nouns:
                     nouns.remove(noun)
@@ -377,11 +377,11 @@ class text_game:
             actionsVectors = []
             for a in actions:
                 actionsVectors.append(self.vectorize_text(a,self.tokenizer))
-            ## create action dictionary
+            
             action_dict = dict()
             for idx, act in enumerate(actions):
                 action_dict[act] = (probs[idx], actionsVectors[idx])
-            ## store state data 
+            
             row = len(self.state_data)
             self.state_data.loc[row, 'State'] = state
             self.state_data.loc[row, 'StateVector'] = [state_vector]
@@ -408,11 +408,11 @@ class text_game:
                     self.valid_nouns.append(noun)
                     
     def detect_invalid_action(self, state, action, reward, action_dict, invalid_noun):
-        ## remember already tried actions that don't change current game state
+        
         invalid_action = ''
         if (reward==-1):
             invalid_action = action
-        ## check if we have an invalid noun or action and remove them from the action dictionary
+        
         if invalid_noun:
             for act, _ in action_dict.items():
                 if invalid_noun in act:
@@ -420,27 +420,27 @@ class text_game:
             self.state_data.loc[self.state_data['State'] == state, 'ActionData'] = [action_dict]
         if invalid_action and invalid_action in action_dict:
             del action_dict[invalid_action]
-            ## update state data 
+            
             self.state_data.loc[self.state_data['State'] == state, 'ActionData'] = [action_dict]
         return action_dict
                       
                     
     def run_game(self, num_games, num_rounds, batch_size, training):
-        ## set global batch size
+        
         self.batch_size = batch_size
         
-        ## initialize game
+        
         self.start_game()
 
-        ## number of games loop
+        
         for game_number in tqdm(range(num_games)):
             new_state = ''
             inventory = ''
 
-            ## number of rounds loop
+            
             for i in range(num_rounds):
                 
-                ## get initial state if first round, else grab new state from previous round
+                
                 if (i==0):
                     state, old_inventory, _ = self.get_state()
                     self.unique_state.add(state)
@@ -448,7 +448,7 @@ class text_game:
                     state  = new_state
                     old_inventory = inventory
                     
-                ## sometimes reading of lines gets backed up, if this happens reset and re-check state
+                
                 invalid_line = True
                 while invalid_line:
                     invalid_line = False
@@ -457,48 +457,48 @@ class text_game:
                         state, old_inventory, _ = self.get_state()
                         invalid_line = True
 
-                ## get data for current state
+                
                 _, actions, state_vector, _, action_dict = self.get_data(state)
             
                 # find action using selected exploration strategy
                 action = self.agent.predict_actions(state, state_vector, action_dict, actions)
 
-                ## perform selected action
+                
                 response = self.perform_selected_action(action)
                 
                 invalid_noun = self.detect_invalid_nouns(response)
                 
-                ## vectorize selected action
+                
                 action_vector = self.vectorize_text(action,self.tokenizer)
 
-                ## check new state after performing action
+                
                 new_state, inventory, current_score = self.get_state()
                 new_state = self.preprocess(new_state)
                 new_state_vector = self.vectorize_text(new_state, self.tokenizer)
                 
-                ## get reward
+                
                 round_score = current_score - self.game_score
                 self.game_score = current_score
                 reward, reward_msg = self.calculate_reward(inventory, old_inventory, i, state, new_state, round_score)
 
-                ## update story dataframe
+                
                 self.score += reward
                 total_round_number = i + game_number*num_rounds
                 self.story.loc[total_round_number] = [state, old_inventory, action, response, reward, 
                                 reward_msg, self.score, str(i), total_round_number]
                 
-                ## check if action changed game state
+                
                 action_dict = self.detect_invalid_action(state, action, reward, action_dict, invalid_noun)
                 
-                ## get new state data
+                
                 new_probs, new_actions, new_state_vector, new_actionsVectors, new_action_dict = self.get_data(new_state)
                 
-                ## remember round data
+                
                 if training:
                     self.agent.remember(state_vector, state, action_vector, reward, new_state_vector,
                                     new_state, action_dict, False)
                 
-                ## if enough experiences in batch, replay 
+                
                 if training and (i+1)%self.batch_size == 0 and self.agent.positive_memory:  
                     self.agent.replay(self.batch_size)
             # ----- for number of rounds ends -----
