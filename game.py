@@ -5,15 +5,14 @@ from itertools import permutations
 from keras.preprocessing.sequence import pad_sequences
 import pickle
 from scipy import spatial
-from gensim.models import Word2Vec
+import gensim
 import numpy as np
-from keras.preprocessing.text import Tokenizer
 import pandas as pd
 from tqdm import tqdm
 
 from agent import DDQNAgent
 import spacy
-import os,sys,re
+import re
 import textworld
 
 # Let the environment know what information we want as part of the game state.
@@ -75,7 +74,7 @@ class text_game:
         self.load_invalid_nouns()
         self.load_valid_nouns()
         self.init_word2vec()
-        self.init_tokenizer()
+        self.load_tokenizer()
         
         self.unique_inventory_changes = set()
         self.state_data = pd.DataFrame(columns=['State', 'StateVector', 'ActionData', 'Nouns'])
@@ -297,63 +296,37 @@ class text_game:
         return word
             
     def save_tokenizer(self):
-        ## save invalid nouns to pickled list
-        try:
-            with open('tokenizer.pickle', 'wb') as fp:
-                pickle.dump(self.tokenizer, fp, protocol=pickle.HIGHEST_PROTOCOL)
-        except:
-            pass
+        with open('tokenizer.pickle', 'wb') as fp:
+            pickle.dump(self.tokenizer, fp, protocol=pickle.HIGHEST_PROTOCOL)
     
     def load_tokenizer(self):
         with open('tokenizer.pickle', 'rb') as fp:
             self.tokenizer = pickle.load(fp)
        
     def save_invalid_nouns(self):
-        ## save invalid nouns to pickled list
-        try:
-            with open('invalid_nouns.pickle', 'wb') as fp:
-                pickle.dump(self.invalid_nouns, fp)
-        except:
-            pass
+        with open('invalid_nouns.pickle', 'wb') as fp:
+            pickle.dump(self.invalid_nouns, fp)
     
     def load_invalid_nouns(self):
-        ## load previously found invalid nouns from pickled list
-        try:
-            with open ('invalid_nouns.pickle', 'rb') as fp:
-                n = pickle.load(fp)
-                self.invalid_nouns.extend(n)
-        except:
-            pass
+        with open ('invalid_nouns.pickle', 'rb') as fp:
+            lst = pickle.load(fp)
+            self.invalid_nouns.extend(lst)
         
     def save_valid_nouns(self):
-        ## save invalid nouns to pickled list
-        try:
-            with open('valid_nouns.pickle', 'wb') as fp:
-                pickle.dump(self.valid_nouns, fp)
-        except:
-            pass
+        with open('valid_nouns.pickle', 'wb') as fp:
+            pickle.dump(self.valid_nouns, fp)
     
     def load_valid_nouns(self):
-        ## load previously found invalid nouns from pickled list
-        try:
-            with open ('invalid_nouns.pickle', 'rb') as fp:
-                n = pickle.load(fp)
-                self.valid_nouns.extend(n)
-        except:
-            pass
+        with open ('invalid_nouns.pickle', 'rb') as fp:
+            lst = pickle.load(fp)
+            self.valid_nouns.extend(lst)
     
     def init_word2vec(self):
-        f = open(self.tutorials_text, 'r', encoding="ISO-8859-1")
-        tutorials = f.read()
-        sentences = word_tokenize(tutorials)
-        w2v = Word2Vec([sentences])
-        return w2v
-        
-    def init_tokenizer(self):
-        try: 
-            self.load_tokenizer()
-        except:
-            self.tokenizer = Tokenizer(num_words=self.vocab_size)
+        with open(self.tutorials_text, 'r', encoding="ISO-8859-1") as f:
+            tutorials = f.read()
+            sentences = word_tokenize(tutorials)
+            w2v = gensim.models.Word2Vec([sentences])
+            return w2v
         
     def get_data(self, state):
         ## if we have generated actions before for state, load them, otherwise generate actions
