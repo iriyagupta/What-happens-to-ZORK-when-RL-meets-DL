@@ -15,6 +15,9 @@ class DDQNAgent:
     """
 
     def __init__(self):
+        self.EMBEDDING_SIZE = 16
+        self.RNN_HIDDEN_LAYERS = 32 
+        self.DENSE_LAYER = 8
         self.memory = deque(maxlen=2000)
         self.positive_memory = deque(maxlen=2000)
         self.prioritized_fraction = 0.25
@@ -33,89 +36,85 @@ class DDQNAgent:
         self.build_dqn_model_2()
 
     def build_dqn_model_1(self):
-        embedding_size = 16
-        rnn_dimension = 32 
-        dense_dim = 8
-
-        input_state = Input(batch_shape=(None, None), name="input_state")
-        input_action = Input(batch_shape=(None, None), name="input_action")
-
-        embedding_shared = Embedding(self.vocab_size + 1, embedding_size, input_length=None, mask_zero=True,
-                            trainable=True, name="embedding_shared")
-        embedding_state = embedding_shared(input_state)
-        embedding_action = embedding_shared(input_action)
+        embedding_shared = Embedding(
+            self.vocab_size + 1, self.EMBEDDING_SIZE, input_length=None, mask_zero=True, trainable=True, name="embedding_shared"
+        )
 
         if self.rnn_type == 'lstm':
-            rnn_shared = LSTM(rnn_dimension, name="rnn_shared")
+            rnn_shared = LSTM(self.RNN_HIDDEN_LAYERS, name="rnn_shared")
         if self.rnn_type == 'gru':
-            rnn_shared = GRU(rnn_dimension, name="rnn_shared")
+            rnn_shared = GRU(self.RNN_HIDDEN_LAYERS, name="rnn_shared")
         if self.rnn_type == 'vanilla':
-            rnn_shared = RNN(rnn_dimension, name="rnn_shared")
-            
+            rnn_shared = RNN(self.RNN_HIDDEN_LAYERS, name="rnn_shared")
+
+        # create model for state
+        input_state = Input(batch_shape=(None, None), name="input_state")
+        embedding_state = embedding_shared(input_state)
         rnn_state = rnn_shared(embedding_state)
+        dense_state = Dense(self.DENSE_LAYER , activation='linear', name="dense_state")(rnn_state)
+        self.state_model_dqn_1 = kModel(inputs=input_state, outputs=dense_state, name="state")
+    
+        # create model for action
+        input_action = Input(batch_shape=(None, None), name="input_action")
+        embedding_action = embedding_shared(input_action)
         rnn_action = rnn_shared(embedding_action)
+        dense_action = Dense(self.DENSE_LAYER , activation='linear', name="dense_action")(rnn_action)
+        self.action_model_dqn_1 = kModel(inputs=input_action, outputs=dense_action, name="action")
 
-        dense_state = Dense(dense_dim, activation='linear', name="dense_state")(rnn_state)
-        dense_action = Dense(dense_dim, activation='linear', name="dense_action")(rnn_action)
-
-        input_dot_state = Input(shape=(dense_dim,))
-        input_dot_action = Input(shape=(dense_dim,))
+        # create joint final linear layer
+        input_dot_state = Input(shape=(self.DENSE_LAYER))
+        input_dot_action = Input(shape=(self.DENSE_LAYER))
         dot_state_action = Dot(axes=-1, normalize=False, name="dot_state_action")([input_dot_state, input_dot_action])
 
-        model_dot_state_action = kModel(inputs=[input_dot_state, input_dot_action], outputs=dot_state_action,
-                                           name="dot_state_action")
-        self.model_dot_state_action = model_dot_state_action
-
-        self.state_model_dqn_1 = kModel(inputs=input_state, outputs=dense_state, name="state")
-        self.action_model_dqn_1 = kModel(inputs=input_action, outputs=dense_action, name="action")
+        self.model_dot_state_action = kModel(
+            inputs=[input_dot_state, input_dot_action], outputs=dot_state_action, name="dot_state_action"
+        )
 
         model = kModel(
             inputs=[self.state_model_dqn_1.input, self.action_model_dqn_1.input], 
-            outputs=model_dot_state_action([self.state_model_dqn_1.output, self.action_model_dqn_1.output])
+            outputs=self.model_dot_state_action([self.state_model_dqn_1.output, self.action_model_dqn_1.output])
         )
         model.compile(optimizer='RMSProp', loss='mse')
         return model
 
     def build_dqn_model_2(self):
-        embedding_size = 16
-        rnn_dimension = 32 
-        dense_dim = 8
-
-        input_state = Input(batch_shape=(None, None), name="input_state")
-        input_action = Input(batch_shape=(None, None), name="input_action")
-
-        embedding_shared = Embedding(self.vocab_size + 1, embedding_size, input_length=None, mask_zero=True,
-                            trainable=True, name="embedding_shared")
-        embedding_state = embedding_shared(input_state)
-        embedding_action = embedding_shared(input_action)
+        embedding_shared = Embedding(
+            self.vocab_size + 1, self.EMBEDDING_SIZE, input_length=None, mask_zero=True, trainable=True, name="embedding_shared"
+        )
 
         if self.rnn_type == 'lstm':
-            rnn_shared = LSTM(rnn_dimension, name="rnn_shared")
+            rnn_shared = LSTM(self.RNN_HIDDEN_LAYERS, name="rnn_shared")
         if self.rnn_type == 'gru':
-            rnn_shared = GRU(rnn_dimension, name="rnn_shared")
+            rnn_shared = GRU(self.RNN_HIDDEN_LAYERS, name="rnn_shared")
         if self.rnn_type == 'vanilla':
-            rnn_shared = RNN(rnn_dimension, name="rnn_shared")
+            rnn_shared = RNN(self.RNN_HIDDEN_LAYERS, name="rnn_shared")
 
+        # create model for state
+        input_state = Input(batch_shape=(None, None), name="input_state")
+        embedding_state = embedding_shared(input_state)
         rnn_state = rnn_shared(embedding_state)
+        dense_state = Dense(self.DENSE_LAYER , activation='linear', name="dense_state")(rnn_state)
+        self.state_model_dqn_2 = kModel(inputs=input_state, outputs=dense_state, name="state")
+    
+        # create model for action
+        input_action = Input(batch_shape=(None, None), name="input_action")
+        embedding_action = embedding_shared(input_action)
         rnn_action = rnn_shared(embedding_action)
+        dense_action = Dense(self.DENSE_LAYER , activation='linear', name="dense_action")(rnn_action)
+        self.action_model_dqn_2 = kModel(inputs=input_action, outputs=dense_action, name="action")
 
-        dense_state = Dense(dense_dim, activation='linear', name="dense_state")(rnn_state)
-        dense_action = Dense(dense_dim, activation='linear', name="dense_action")(rnn_action)
-
-        input_dot_state = Input(shape=(dense_dim,))
-        input_dot_action = Input(shape=(dense_dim,))
+        # create joint final linear layer
+        input_dot_state = Input(shape=(self.DENSE_LAYER))
+        input_dot_action = Input(shape=(self.DENSE_LAYER))
         dot_state_action = Dot(axes=-1, normalize=False, name="dot_state_action")([input_dot_state, input_dot_action])
 
-        model_dot_state_action = kModel(inputs=[input_dot_state, input_dot_action], outputs=dot_state_action,
-                                           name="dot_state_action")
-        self.model_dot_state_action_double = model_dot_state_action
-
-        self.state_model_dqn_2 = kModel(inputs=input_state, outputs=dense_state, name="state")
-        self.action_model_dqn_2 = kModel(inputs=input_action, outputs=dense_action, name="action")
+        self.model_dot_state_action_double = kModel(
+            inputs=[input_dot_state, input_dot_action], outputs=dot_state_action, name="dot_state_action"
+        )
 
         model = kModel(
             inputs=[self.state_model_dqn_2.input, self.action_model_dqn_2.input], 
-            outputs=model_dot_state_action([self.state_model_dqn_2.output, self.action_model_dqn_2.output])
+            outputs=self.model_dot_state_action_double([self.state_model_dqn_2.output, self.action_model_dqn_2.output])
         )
         model.compile(optimizer='RMSProp', loss='mse')
 
