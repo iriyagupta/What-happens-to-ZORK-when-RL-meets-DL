@@ -105,10 +105,8 @@ class text_game:
     def restart_game(self):
         self.save_invalid_nouns()
         self.save_valid_nouns()
-        self.perform_action('restart')
-        self.readLine()
-        self.perform_action('y')
-        self.readLine()
+        self.env.step('restart')
+        self.env.step('y') # confirm
         self.score = 0
         self.unique_state = set()
         self.unique_inventory_changes = set()
@@ -117,17 +115,15 @@ class text_game:
     def save_model_weights(self):
         self.agent.model.save_weights('ddqn_model_weights.h5')
         
-    def readLine(self):
-        line = self.game_state.description
-        state = line.replace('\n', " ").replace('\r', " ")
-        if ('840726' in state): ## Opening state
-            state = state[state.index('840726') + len('840726'):]
-        try:
-            score, moves = self.grab_score_moves(state)
-            state = state[state.index('Moves: ')+len('Moves:')+5:-1].strip()
-        except:  ## not valid move
-            pass
-        return state, score, moves
+    def getGameState(self):
+        description = self.game_state.description
+        description = description.replace('\n', " ").replace('\r', " ")
+
+        # 840726 marks the start of the game
+        if '840726' in description:
+            description = description[description.index('840726') + len('840726'):]
+            
+        return description
         
     def get_state(self):
         ## check surroundings
@@ -136,20 +132,10 @@ class text_game:
         ## check inventory
         inventory = self.preprocess(self.game_state.inventory)
         score = self.game_state.score
-        moves = self.game_state.moves
         
         ## join surroundings and inventory
         state = surroundings + ' ' + inventory
-        return state, inventory, score, moves
-    
-    def grab_score_moves(self, state):
-        try:
-            score = int(state[state.index('Score: ') + len('Score: '):][0:3].strip())
-            moves = int(state[state.index('Moves: ') + len('Moves: '):][0:3].strip())
-        except:  ## not valid move
-            score = 0
-            moves = 0
-        return score, moves
+        return state, inventory, score
 
     def get_nouns(self, state):
         matcher = Matcher(self.nlp.vocab)
@@ -432,9 +418,9 @@ class text_game:
     
     def perform_selected_action(self, action):
         self.perform_action(action)
-        response,current_score,moves = self.readLine()
+        response = self.getGameState()
         response = self.preprocess(response)
-        return response, current_score, moves
+        return response
     
     def test_nouns(self, nouns):
         for noun in nouns:
@@ -442,7 +428,7 @@ class text_game:
                 pass
             else:
                 action = 'feel ' + noun
-                response, current_score, moves = self.perform_selected_action(action)
+                response, _, _ = self.env.step(action)
                 if('know the word' in response):
                     self.invalid_nouns.append(noun)
                 else:
@@ -455,7 +441,7 @@ class text_game:
             invalid_action = action
         ## check if we have an invalid noun or action and remove them from the action dictionary
         if invalid_noun:
-            for act, data in action_dict.items():
+            for act, _ in action_dict.items():
                 if invalid_noun in act:
                     del action_dict[invalid_noun]
             self.state_data.loc[self.state_data['State'] == state, 'ActionData'] = [action_dict]
@@ -483,7 +469,7 @@ class text_game:
                 
                 ## get initial state if first round, else grab new state from previous round
                 if (i==0):
-                    state, old_inventory, _, _, = self.get_state()
+                    state, old_inventory, _ = self.get_state()
                     self.unique_state.add(state)
                 else:
                     state  = new_state
@@ -495,24 +481,17 @@ class text_game:
                     invalid_line = False
                     if len(state) > self.state_limit or len(state)<5 or 'score' in state:
                         print('encountered line read bug')
-                        state, old_inventory, _, _, = self.get_state()
+                        state, old_inventory, _ = self.get_state()
                         invalid_line = True
 
-                # akshay
-                # print(state)
-
-                    
                 ## get data for current state
                 _, actions, state_vector, _, action_dict = self.get_data(state)
             
                 # find action using selected exploration strategy
                 action = self.agent.predict_actions(state, state_vector, action_dict, actions)
 
-                # akshay
-                # print('-- ' + action + ' --')
-
                 ## perform selected action
-                response, current_score, moves = self.perform_selected_action(action)
+                response = self.perform_selected_action(action)
                 
                 invalid_noun = self.detect_invalid_nouns(response)
                 
@@ -520,7 +499,7 @@ class text_game:
                 action_vector = self.vectorize_text(action,self.tokenizer)
 
                 ## check new state after performing action
-                new_state, inventory, current_score, moves = self.get_state()
+                new_state, inventory, current_score = self.get_state()
                 new_state = self.preprocess(new_state)
                 new_state_vector = self.vectorize_text(new_state, self.tokenizer)
                 
@@ -567,5 +546,3 @@ class text_game:
             self.state_data.to_pickle('state_data.pickle')
 
         self.kill_game()
-        return True
-
