@@ -22,8 +22,16 @@ infos = textworld.EnvInfos(
     inventory=True    # Text describing the player's inventory.
 )
 
-class text_game:
-    
+VOCAB_SIZE = 1200
+STATE_LIMIT = 1000
+
+negative_per_turn_reward = 1
+inventory_reward_value = 3
+new_area_reward_value = 2
+moving_around_reward_value = 0.5
+inventory_not_new_reward_value = 0.5
+
+class PlayZork:
     def __init__(self):
         self.agent = DDQNAgent()
         self.batch_size = None
@@ -31,17 +39,11 @@ class text_game:
         
         # We are now ready to start the game.
         self.env = textworld.start('zork1.z5', infos=infos)
-
-        self.compiled_expression = re.compile('[^ \-\sA-Za-z0-9"\']+')
-        
-        self.tutorials_text = 'tutorials_2.txt'
         self.word_2_vec = self.init_word2vec()
         
         self.nlp = spacy.load('en_core_web_sm')
         
         self.tokenizer = None
-        self.vocab_size = 1200
-        self.state_limit = 1000
         
         self.random_action_weight = 6
         self.random_action_basic_prob = 0.4
@@ -50,11 +52,6 @@ class text_game:
         self.score = 0
         self.game_score = 0
         self.game_score_weight = 1
-        self.negative_per_turn_reward = 1
-        self.inventory_reward_value = 3
-        self.new_area_reward_value = 2
-        self.moving_around_reward_value = 0.5
-        self.inventory_not_new_reward_value = 0.5
                 
         self.basic_actions = ['go north', 'go south', 'go west', 'go east', 'go northeast', 'go northwest', 'go southeast', 'go southwest', 'go down', 'go up']
         self.action_space = set(self.basic_actions)
@@ -73,7 +70,6 @@ class text_game:
         
         self.load_invalid_nouns()
         self.load_valid_nouns()
-        self.init_word2vec()
         self.load_tokenizer()
         
         self.unique_inventory_changes = set()
@@ -125,14 +121,9 @@ class text_game:
         return description
         
     def get_state(self):
-        
         surroundings = self.preprocess(self.game_state.description)
-
-        
         inventory = self.preprocess(self.game_state.inventory)
         score = self.game_state.score
-        
-        
         state = surroundings + ' ' + inventory
         return state, inventory, score
 
@@ -234,7 +225,7 @@ class text_game:
         # convert to lowercase
         text = text.lower()
         # remove all characters except alphanum, spaces and - ' "
-        text = self.compiled_expression.sub('', text)
+        text = re.compile('[^ \-\sA-Za-z0-9"\']+').sub('', text)
         text = re.sub('\s{2,}', ' ', text)
         return text
 
@@ -258,28 +249,27 @@ class text_game:
                 print('Scored ' + str(round_score) + ' points in game.')
                 reward_msg += ' game score: ' + str(round_score) + ' '
         
-        reward = reward - self.negative_per_turn_reward
-        
+        reward = reward - negative_per_turn_reward
         
         if(moves_count != 0):
             if inventory.strip().lower() not in old_inventory.strip().lower(): 
                 
                 if (old_inventory + ' - ' + inventory) not in self.unique_inventory_changes:
                     self.unique_inventory_changes.add(old_inventory + ' - ' + inventory)
-                    reward = reward + self.inventory_reward_value
+                    reward = reward + inventory_reward_value
                     print('inventory changed - new')
                     reward_msg += ' inventory score (' + old_inventory + " --- " + inventory + ')'
                 else:
-                    reward = reward + self.inventory_not_new_reward_value
+                    reward = reward + inventory_not_new_reward_value
                     
         
         if new_state.strip() not in self.unique_state:  
-            reward = reward + self.new_area_reward_value
+            reward = reward + new_area_reward_value
             self.unique_state.add(new_state.strip())
             reward_msg += ' new area score ---' + new_state.strip()
         
         if old_state not in new_state:
-            reward = reward + self.moving_around_reward_value
+            reward = reward + moving_around_reward_value
             reward_msg += ' - moved around - ' 
 
         
@@ -322,7 +312,8 @@ class text_game:
             self.valid_nouns.extend(lst)
     
     def init_word2vec(self):
-        with open(self.tutorials_text, 'r', encoding="ISO-8859-1") as f:
+        # preload word2vec model
+        with open('demodock.txt', 'r', encoding="ISO-8859-1") as f:
             tutorials = f.read()
             sentences = word_tokenize(tutorials)
             w2v = gensim.models.Word2Vec([sentences])
@@ -445,7 +436,7 @@ class text_game:
                 invalid_line = True
                 while invalid_line:
                     invalid_line = False
-                    if len(state) > self.state_limit or len(state)<5 or 'score' in state:
+                    if len(state) > STATE_LIMIT or len(state)<5 or 'score' in state:
                         print('encountered line read bug')
                         state, old_inventory, _ = self.get_state()
                         invalid_line = True

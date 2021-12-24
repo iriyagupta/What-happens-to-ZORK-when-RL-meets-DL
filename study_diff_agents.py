@@ -1,7 +1,7 @@
-from game import text_game
+from game import PlayZork
 
 def run_ddqn():
-    game = text_game()
+    game = PlayZork()
     game.run_game(num_games=32, num_rounds=64, batch_size=8, training=True)
 
     game_scores = game.end_game_scores.copy()
@@ -9,7 +9,7 @@ def run_ddqn():
 
 
 def run_random():
-    game = text_game()
+    game = PlayZork()
     game.agent.epsilon_decay = 1.0 # no decay at all
     game.run_game(num_games=32, num_rounds=64, batch_size=8, training=False)
 

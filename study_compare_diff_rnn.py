@@ -1,8 +1,8 @@
-from game import text_game
+from game import PlayZork
 
 
 def train_gru_model():
-    game = text_game()
+    game = PlayZork()
     game.agent.rnn_type = 'gru'
     
     game.run_game(num_games=100, num_rounds=100, batch_size=64, training=True)
@@ -11,7 +11,7 @@ def train_gru_model():
 
 
 def train_rnn_model():
-    game = text_game()
+    game = PlayZork()
     game.agent.rnn_type = 'vanilla'
 
     game.run_game(num_games=100, num_rounds=100, batch_size=64, training=True)

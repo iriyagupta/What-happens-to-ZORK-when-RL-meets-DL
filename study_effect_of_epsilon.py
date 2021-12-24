@@ -1,7 +1,7 @@
-from game import text_game
+from game import PlayZork
 
 def run_ddqn(epsilon):
-    game = text_game()
+    game = PlayZork()
     game.agent.epsilon = epsilon
     game.run_game(num_games=16, num_rounds=32, batch_size=8, training=True)
 
