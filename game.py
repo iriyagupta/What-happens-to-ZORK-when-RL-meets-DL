@@ -425,21 +425,15 @@ class text_game:
         return action_dict
                       
                     
-    def run_game(self, num_games, num_rounds, batch_size, training):
-        
-        self.batch_size = batch_size
-        
-        
+    def run_game(self, num_games, num_rounds, batch, training):
+        self.batch_size = batch
         self.start_game()
 
-        
         for game_number in tqdm(range(num_games)):
             new_state = ''
             inventory = ''
-
             
             for i in range(num_rounds):
-                
                 
                 if (i==0):
                     state, old_inventory, _ = self.get_state()
@@ -448,7 +442,6 @@ class text_game:
                     state  = new_state
                     old_inventory = inventory
                     
-                
                 invalid_line = True
                 while invalid_line:
                     invalid_line = False
@@ -456,48 +449,36 @@ class text_game:
                         print('encountered line read bug')
                         state, old_inventory, _ = self.get_state()
                         invalid_line = True
-
                 
                 _, actions, state_vector, _, action_dict = self.get_data(state)
             
                 # find action using selected exploration strategy
                 action = self.agent.predict_actions(state, state_vector, action_dict, actions)
 
-                
                 response = self.perform_selected_action(action)
                 
                 invalid_noun = self.detect_invalid_nouns(response)
                 
-                
                 action_vector = self.vectorize_text(action,self.tokenizer)
 
-                
                 new_state, inventory, current_score = self.get_state()
                 new_state = self.preprocess(new_state)
                 new_state_vector = self.vectorize_text(new_state, self.tokenizer)
-                
                 
                 round_score = current_score - self.game_score
                 self.game_score = current_score
                 reward, reward_msg = self.calculate_reward(inventory, old_inventory, i, state, new_state, round_score)
 
-                
                 self.score += reward
                 total_round_number = i + game_number*num_rounds
                 self.story.loc[total_round_number] = [state, old_inventory, action, response, reward, 
                                 reward_msg, self.score, str(i), total_round_number]
                 
-                
                 action_dict = self.detect_invalid_action(state, action, reward, action_dict, invalid_noun)
-                
-                
-                new_probs, new_actions, new_state_vector, new_actionsVectors, new_action_dict = self.get_data(new_state)
-                
-                
+                _, _, new_state_vector, _, _ = self.get_data(new_state)
                 if training:
                     self.agent.remember(state_vector, state, action_vector, reward, new_state_vector,
                                     new_state, action_dict, False)
-                
                 
                 if training and (i+1)%self.batch_size == 0 and self.agent.positive_memory:  
                     self.agent.replay(self.batch_size)
