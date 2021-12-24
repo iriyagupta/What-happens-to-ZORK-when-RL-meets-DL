@@ -17,4 +17,6 @@ To run the code, run the following files:
 `study_effect_of_epsilon.py`
 `study_time_action_space_size.py`
 
+TYou can find the project report under:
+`ELENE6885_2021Fall_textgameZORK_report_rg3332_as6429_sk4824_st3364.pdf`
 
