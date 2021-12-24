@@ -4,7 +4,6 @@ from nltk.tokenize import word_tokenize
 from itertools import permutations
 from keras.preprocessing.sequence import pad_sequences
 import pickle
-import re
 from scipy import spatial
 from gensim.models import Word2Vec
 import numpy as np
@@ -14,7 +13,7 @@ from tqdm import tqdm
 
 from agent import DDQNAgent
 import spacy
-import re
+import os,sys,re
 import textworld
 
 # Let the environment know what information we want as part of the game state.
